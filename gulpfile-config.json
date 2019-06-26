@@ -1,0 +1,23 @@
+{
+  "name": "website",
+  "file": {
+    "src": [
+      "**/*.php"
+    ]
+  },
+  "css": {
+    "src": [
+      "scss/**/*.scss"
+    ],
+    "dest": "css"
+  },
+  "js": {
+    "src": [
+      "script/src/**/*.js"
+    ],
+    "dest": "script"
+  },
+  "browsersync": {
+    "proxy": "local.website"
+  }
+}
