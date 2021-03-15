@@ -18,6 +18,6 @@
     "dest": "script"
   },
   "browsersync": {
-    "proxy": "local.website"
+    "proxy": "local.app"
   }
 }

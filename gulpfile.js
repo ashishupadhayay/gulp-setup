@@ -1,44 +1,59 @@
-var config = require('./gulpfile-config.json');
-var gulp = require('gulp');
-var plumber = require('gulp-plumber');
-var sourcemaps = require('gulp-sourcemaps');
-var sass = require('gulp-sass');
-var autoprefix = require('gulp-autoprefixer');
-var uglify = require('gulp-uglify');
-var concat = require('gulp-concat');
-var browserSync = require('browser-sync').create();
+"use strict";
 
-// CSS
-gulp.task('css', function() {
-  return gulp.src(config.css.src)
-  .pipe(plumber())
-  .pipe(sourcemaps.init())
-  .pipe(sass({outputStyle: 'compressed'}))
-  .pipe(autoprefix('last 2 versions', '> 1%', 'ie 9', 'ie 10'))
-  .pipe(sourcemaps.write('.'))
-  .pipe(gulp.dest(config.css.dest))
-  .pipe(browserSync.reload({
-    stream: true,
-  }));
-});
+const config = require('./gulpfile-config.json');
+const gulp = require('gulp');
+const plumber = require('gulp-plumber');
+const sass = require('gulp-sass');
+const browsersync = require('browser-sync').create();
+const rename = require('gulp-rename');
+const postcss = require('gulp-postcss');
+const autoprefixer = require('autoprefixer');
+const cssnano = require('cssnano');
 
-// JS
-gulp.task('js', function() {
-  return gulp.src(config.js.src)
-  .pipe(plumber())
-  .pipe(sourcemaps.init())
-  .pipe(concat('app.min.js'))
-  .pipe(uglify())
-  .pipe(sourcemaps.write('.'))
-  .pipe(gulp.dest(config.js.dest));
-});
-
-// Watch
-gulp.task('watch', ['css', 'js'], function() {
-  browserSync.init({
+// BrowserSync
+function browserSync(done) {
+  browsersync.init({
     proxy: config.browsersync.proxy
   });
-  gulp.watch(config.css.src, ['css']);
-  gulp.watch(config.js.src, ['js']);
-  gulp.watch(config.file.src).on('change', browserSync.reload);
-});
+  done();
+}
+
+// BrowserSync Reload
+function browserSyncReload(done) {
+  browsersync.reload();
+  done();
+}
+
+// CSS
+function css() {
+  return gulp
+    .src(config.css.src)
+    .pipe(plumber())
+    .pipe(sass({ outputStyle: 'expanded' }))
+    .pipe(gulp.dest(config.css.dest))
+    .pipe(rename({ suffix: '.min' }))
+    .pipe(postcss([autoprefixer(), cssnano()]))
+    .pipe(gulp.dest(config.css.dest))
+    .pipe(browsersync.stream());
+}
+
+// JS
+function scripts() {
+  return gulp
+    .src([config.js.src])
+    .pipe(plumber())
+    .pipe(concat('app.min.js'))
+    .pipe(uglify())
+    .pipe(gulp.dest(config.js.dest))
+    .pipe(browsersync.stream());
+}
+
+// Watch
+function watchFiles() {
+  gulp.watch(config.css.src, css);
+  gulp.watch(config.js.src, scripts);
+  gulp.watch(config.file.src, gulp.series(browserSyncReload));
+}
+
+const watch = gulp.parallel(watchFiles, browserSync);
+exports.watch = watch;
